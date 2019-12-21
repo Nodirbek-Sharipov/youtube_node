@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>YouTube Downloader</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <style type="text/css">
+    body{
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(45deg,#23283b,#59627f);
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100vh;
+    }
+    button{
+      background: linear-gradient(45deg, rgb(255, 47, 87), rgb(255, 125, 134));
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      margin: 10px 0;
+      padding: 10px 20px;
+      /*box-shadow: 0 10px 20px 1px rgba(255, 47, 87, 0.4);*/
+      font-family: 'Segoe UI', Arial, sans-serif;
+      letter-spacing: 1px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    form{
+      height: 20vh;
+      align-items: center;
+      justify-content: center;
+      display: flex;
+    }
+    form > input{
+      color: rgb(24, 27, 44);
+      border: none;
+      border-radius: 5px;
+      padding: 15px 90px 15px 25px;
+      width: 60%;
+      outline: none;
+      font-weight: 600;
+    }
+    .theRest{
+      height: 80vh;
+      overflow-y: auto;
+    }
+    form > button{
+      margin-left: -80px;
+    }
+    .cardRow{
+      padding-bottom: 20px;
+      padding-top: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card{
+      background: linear-gradient(45deg, rgb(24, 27, 44), rgb(59, 64, 86));
+      border-radius: 5px;
+      box-shadow: -10px 10px 15px 1px rgba(0, 0, 0, 0.4);
+      padding: 20px;
+      min-height: 100px;
+      width: 60%;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      flex-direction: column;
+      min-width: 300px;
+    }
+    .imgtxt{
+      display: flex;
+      flex-direction: row;
+    }
+    .imgtxt > img{
+      border-radius: 5px;
+      width: 150px;
+    }
+
+    .info{
+      flex: 1;
+      display: flex;
+      align-items: center;
+      padding: 20px; 
+
+    }
+    .links{
+      flex: 1;
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+    }
+
+    .links div{
+      height: 40px;
+      padding-left: 10px;
+      padding-right: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .links div a{
+      background: #fff;
+      color: #000;
+      border: none;
+      border-radius: 5px;
+      padding: 5px;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      letter-spacing: 1px;
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    @media only screen and (max-width: 600px){
+      .imgtxt{
+        flex-direction: column;
+      }
+      .imgtxt > img {
+        width: 100%;
+      }
+    }
+
+  </style>
+</head>
+<body>
+
+  <form>
+    <input type="text" name="url" id="urlBar" placeholder="Paste video or playlist URL here..." autocomplete="off">
+    <button type="submit" id="loadBtn">Load</button>
+  </form>
+  <div class="theRest">
+    
+
+
+
+  </div>
+
+
+</body>
+<script type="text/javascript" defer>
+
+
+  const validate = url => url.match(/^(http(s)?:\/\/)?((w){3}.)?youtu(be|.be)?(\.com)?\/.+/gi);
+  const setLoading = isLoading => isLoading ? $('#urlBar').attr.disabled = true : $('#urlBar').attr.disabled = false; 
+  
+  $('form').on('submit', e => {
+    e.preventDefault();
+    const url = $('#urlBar').val();
+    if(validate(url)){
+      // valid url
+      setLoading(true);
+      $.post('http://localhost:3000/', {url: url}, ({ error, data, isPlaylist }, success)=>{
+        if(`${success}` === 'success'){
+          console.log(data);
+          if(error){
+            console.log(error.message)
+            // show error to user
+          }else{
+            if(isPlaylist){
+              // loop the playlist
+
+            }else{
+              // show single video item
+              let links = data.formats.reduce((acc, x, i, a)=> acc + `<div><a href="${x.url}" target="_blank" download="${data.fulltitle+'.'+x.ext}">${ x.vcodec !== 'none' ? x.format.split('x')[1].split(' ')[0]+'p '+ (x.acodec === 'none' ? '🔇' : '🔈') : 'Audio ' + x.ext}</a></div>`, ``);
+              $('.theRest').html('');
+              $('.theRest').append(`<div class="cardRow"><div class="card"><div class="imgtxt"><img src="${data.thumbnails[0].url}"><div class="info">${data.fulltitle}</div></div><div class="links">${links}</div></div></div>`)
+            }
+          }
+        }else{
+          // error posting the data
+        }
+        setLoading(false);
+      })
+
+    }else{
+      // invalid url
+      console.log('invalid...');
+    }
+  });
+
+  $.post('http://localhost:3000/', {url: 'https://www.youtube.com/playlist?list=PL4cUxeGkcC9ij8CfkAY2RAGb-tmkNwQHG'}, ({ error, data, isPlaylist }, success)=>{
+    console.log(data)
+  });
+
+
+
+</script>
+</html>
+
+
+
+
+
+
+
+
+
+
+
